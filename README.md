@@ -30,15 +30,13 @@ npm run dev
 ## 目录结构
 
 ```
-vue_client  vue客户端
-  
-	- src
-		
-		-static
-			- image 该文件夹为网站静态资源存放路径，设计图标放置于该文件下，可以在该文件夹下新建文件夹
-
-
-swoole_server swoole  服务端
-
+- vue_client  vue客户端
+    - src vue组件、api接口、入口文件存放地址
+     - static
+       - image 该文件夹为网站静态资源存放路径，设计图标放置于该文件下，可以在该文件夹下新建文件夹
+- swoole_server swoole  服务端
+    - config db配置、redis配置、基础配置
+    - misc sql文件、nginx配置
+    - server 核心服务
 ```
 ## 版权声明
