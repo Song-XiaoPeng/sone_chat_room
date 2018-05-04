@@ -34,9 +34,9 @@
   </div>
   <div class="form">
     <group>
-        <x-input title="昵称" v-model="nickname" required placeholder="请输入昵称" class="x_input"></x-input>
-        <x-input title="密码" v-model="password" type="password" required placeholder="请输入密码" class="x_input"></x-input>
-        <x-button type="primary" @click.native="login">登陆</x-button>
+        <x-input title="昵称" v-model="nickname" required min=3 placeholder="请输入昵称，最少三位" class="x_input"></x-input>
+        <x-input title="密码" v-model="password" type="password" min=3 required placeholder="请输入密码，最少三位" class="x_input"></x-input>
+        <x-button type="primary" @click.native="login" @keyup.native.enter="login">登陆</x-button>
     </group>
   </div>
 </div>
@@ -52,11 +52,18 @@ export default {
           value: '2018-04-29',
           nickname: '',
           password: '',
-          show2: false
+          show2: false,
+          ajaxLock: false
       }
   },
   methods:{
       login() {
+        if(this.nickname == '' || this.password == '') {
+            this.notify({msg:"账号或者密码不能为空！"})
+            return
+        }
+        if (this.ajaxLock) return 
+        this.ajaxLock = true
         this.ajax.login({
             data: {
                 nickname: this.nickname,
@@ -70,10 +77,19 @@ export default {
                 this.$router.push('/')
             },
             error:(res) => {
+                this.ajaxLock = false
                 this.notify({msg:res})
             }
         })
       }
+  },
+  created() {
+    document.onkeydown = (e) => {
+        let key = window.event.keyCode;
+        if(key==13) {
+            this.login()
+        }
+    }
   },
   components: {
       Group,

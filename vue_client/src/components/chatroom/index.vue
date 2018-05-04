@@ -122,6 +122,7 @@ import { fetchUserInfo,getNowFormatDate } from '../../api/tools.js'
 export default {
   data() {
     return {
+      ajaxLock: false,
       userinfo: {},
       msgList: [],
       msg: '',
@@ -145,6 +146,8 @@ export default {
     onClose(event) {
     },
     sendMessage() {
+      if (this.ajaxLock) return
+      this.ajaxLock = true
       if (this.msg == '') return
       let msg =  {
         uid: this.userinfo.uid,
@@ -155,6 +158,7 @@ export default {
       this.msgList.push(msg)
       this.socket.send(JSON.stringify(msg))
       this.msg = ''
+      this.ajaxLock = false
     },
     onMessage(event) {
       let msg = JSON.parse(event.data)
@@ -182,6 +186,12 @@ export default {
     this.socket.onmessage = this.onMessage
     this.socket.onclose = this.onClose
     this.userinfo = fetchUserInfo()
+
+    document.onkeydown = (e) => {
+        if(e.keyCode == 13) {
+            this.sendMessage()
+        }
+    }
   },
   components: {
     Divider,
