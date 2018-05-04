@@ -1,12 +1,15 @@
 <?php
+use Medoo\Medoo;
 
 class Swoole
 {
     protected $server;
+    protected $db;
 
     public function __construct()
     {
         $this->server = new swoole_websocket_server("0.0.0.0", 81);
+        $this->db = new Medoo();
     }
 
     public function onOpen(swoole_websocket_server $server, $request)

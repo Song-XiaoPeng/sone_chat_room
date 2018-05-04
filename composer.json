@@ -1,0 +1,20 @@
+{
+    "name": "sone_chat_room",
+    "authors": [
+        {
+            "name": "Sone-Xiao-Peng",
+            "email": "sonexpeng@163.com"
+        }
+    ],
+    "require": {
+        "catfan/medoo": "^1.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "": "swoole_server/server/"
+        },
+        "classmap": [
+            "swoole_server/server/"
+        ]
+    }
+}
