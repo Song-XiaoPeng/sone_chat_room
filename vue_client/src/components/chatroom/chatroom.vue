@@ -1,9 +1,10 @@
-<style lang="less">
+<style lang="less" scoped>
 @import '~vux/src/styles/1px.less';
 .content {
   padding: 15px;
   overflow-y: auto;
-  margin-bottom:40px;
+  margin-bottom: 40px;
+  margin-top: 46px;
 }
 
 .header {
@@ -70,13 +71,32 @@
   position: fixed;
   bottom: 0;
   width: 100%;
+  background:#ececec;
   padding: 5px;
+}
+
+.msg_input {
+  height:30px;
+  width:80%;
+  border: 0px;
+  outline:none;
+  cursor: pointer;
+  z-index: 200;
+}
+
+.content::-webkit-scrollbar {/*滚动条整体样式*/
+            width: 4px;     /*高宽分别对应横竖滚动条的尺寸*/
+            height: 4px;
+        }
+
+.msg_button {
+  // width:20%
 }
 </style>
 
 <template>
   <div class="container1">
-    <div class="header">聊天室</div>
+    <x-header :left-options="{showBack:true}" @on-click-back="" style="width:100%;position:absolute;left:0;top:0;z-index:100;">三人行必有我师焉</x-header>
     <div class="content">
       <toast v-model="showConnectValue" type="text" :time="2000" width="10em" is-show-mask :text="showConnectText" position="top"></toast>
       <ul>
@@ -105,23 +125,25 @@
       </ul>
     </div>
     <div class="sendMsg">
-      <group>
-        <x-input v-model="msg" novalidate :show-clear="false" style="height:20px;">
-          <x-button slot="right" type="primary" mini @click.native="sendMessage">发送</x-button>
-        </x-input>
-      </group>
+        <!-- <x-input v-model="msg" novalidate :show-clear="false" style="height:20px;">
+        </x-input> -->
+        <input class="msg_input" v-model="msg"/>
+        <x-button slot="right" type="primary" mini @click.native="sendMessage" class="msg_button">发送</x-button>
     </div>
   </div>
 </template>
 
 <script>
-import { Divider,Flexbox,FlexboxItem,XButton,XInput,Group,ViewBox,XTextarea,Toast } from 'vux'
+import { XHeader,Divider,Flexbox,FlexboxItem,XButton,XInput,Group,ViewBox,XTextarea,Toast } from 'vux'
 import { socket } from '../../api/socket.js'
 import { fetchUserInfo,getNowFormatDate } from '../../api/tools.js'
+import { openDB,createDB,insertData,getData } from '../../api/WebDB.js'
+import Bus from '../../api/bus.js'
 
 export default {
   data() {
     return {
+      db: '',
       ajaxLock: false,
       userinfo: {},
       msgList: [],
@@ -157,6 +179,7 @@ export default {
       }
       this.msgList.push(msg)
       this.socket.send(JSON.stringify(msg))
+      insertData(this.db, 'group_msg', msg)
       this.msg = ''
       this.ajaxLock = false
     },
@@ -171,28 +194,41 @@ export default {
           this.showConnectMsg(msg.userInfo, 'close')
         break;
         case 'message':
-          this.msgList.push({
+          let msg1 = {
             uid: msg.uid,
-            msg: msg.msg,
             sendTime: msg.send_time,
+            msg: msg.msg,
             userInfo: msg.userInfo
-          })
+          }
+          insertData(this.db,'group_msg',msg1)
+          this.msgList.push(msg1)
         break;
       }
     }
   },
   created() {
+    var _this = this
     this.socket = socket
     this.socket.onmessage = this.onMessage
     this.socket.onclose = this.onClose
     this.userinfo = fetchUserInfo()
-
+    createDB("chatroom")
     document.onkeydown = (e) => {
         if(e.keyCode == 13) {
             this.sendMessage()
         }
     }
+    Bus.$on('flushMsgList',(val) => {
+        this.msgList = val      
+    })
+    Bus.$on('createDB',function(val){
+      _this.db = val
+      getData(val,'group_msg')
+    })
   },
+  beforeRouteUpdate() {
+    console.log(11123123123)
+  }, 
   components: {
     Divider,
     Flexbox,
@@ -202,7 +238,8 @@ export default {
     Group,
     ViewBox,
     XTextarea,
-    Toast 
+    Toast ,
+    XHeader
   }
 }
 </script>
