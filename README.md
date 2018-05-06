@@ -12,19 +12,13 @@
     - 兴趣中心
     - 个人中心
 4. 技术栈
-    - Vue 
+    - Vue2.0 
     - Swoole 
     - WebSocket
     - Mysql 
     - Redis 
     - IndexedDB
-    - Vux
-
-### 目的
-1. 旨在开发的过程中，不断完善自己的技能，打磨自己的技术，培养前后端的架构能力，以及美感
-2. 按照框架的规范，来严格要求自己的代码质量，同时不断美化界面，优化用户交互，提升用户体验
-3. 不只是开发，更希望作品能够被身边的人使用。会朝着这个方向不断迈进
-4. 欢迎感兴趣的童鞋一起开发，一起玩
+    - vux
 
 ## 版本说明
 1. 版本号
@@ -35,7 +29,16 @@
 
 ## 安装和运行
 ```
-git clone https://github.com/Song-XiaoPeng/sone_chat_room.git
+git clone https://github.com/Song-XiaoPeng/sone_chat_room.git project_name
+
+cd project_name 
+
+composer install
+
+cd swoole_server/config 
+
+将文件config.example.php 修改为 config.php，然后配置自己的数据库等信息
+
 ```
 
 ### 客户端运行
@@ -87,3 +90,9 @@ npm run build   //项目打包
 ├── LICENSE
 ```
 ## 版权声明
+
+## 目的源于热爱
+1. 旨在开发的过程中，不断完善自己的技能，打磨自己的技术，培养前后端的架构能力，以及美感
+2. 按照框架的规范，来严格要求自己的代码质量，同时不断美化界面，优化用户交互，提升用户体验
+3. 不只是开发，更希望作品能够被身边的人使用。会朝着这个方向不断迈进
+4. 欢迎感兴趣的童鞋一起开发，一起玩
