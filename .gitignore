@@ -14,4 +14,4 @@ yarn-error.log
 
 /vendor/
 ./swoole_server/config/config.php
-./swoole_server/runtime
+./swoole_server/runtime/
