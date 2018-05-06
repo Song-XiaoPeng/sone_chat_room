@@ -1,7 +1,7 @@
 ﻿# sone_chat_room
 > 基于vue2.0+Swoole开发的web聊天室
 
-[在线体验地址](http://sone.timeline.hellobirds.top)
+[在线体验地址(账号：sss，密码：sss123)](http://sone.timeline.hellobirds.top)
 
 ## 项目介绍
 1. 界面使用vue2.0、移动端UI vux
