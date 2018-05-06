@@ -4,17 +4,27 @@ use Medoo\Medoo;
 class Swoole
 {
     protected $server;
-    protected $db;
+    protected $business;
+    protected $log;
 
-    public function __construct()
+    public function __construct($config)
     {
-        $this->server = new swoole_websocket_server("0.0.0.0", 81);
-        $this->db = new Medoo();
+        //加载日志处理对象
+        $this->log = new MyLog();
+
+        //注册自定义异常处理函数
+        set_exception_handler([$this, 'exceptionHandler']);
+        
+        $this->server = new swoole_websocket_server($config['ws']['host'], $config['ws']['port']);
+
+        $this->business = new Business($config);
     }
 
     public function onOpen(swoole_websocket_server $server, $request)
     {
-        echo "client_id: {$request->fd} 连接成功"."\n";
+        $log = "client_id: {$request->fd} 连接成功";
+        $this->log->writeLog($log);
+
         $msg = [
             'client_id' => $request->fd,
             'msg_type' => 'onconnect'
@@ -36,15 +46,16 @@ class Swoole
                     'client_id' => $data['client_id'],
                     'uid' => $data['uid']
                 ]);
-                echo "uid:【" . $data['uid'] . "】登陆了，client_id:【" . $data['client_id'] . "】\n";
-                echo "插入数据库【client_user】自增id：【" . $database->id() . "】\n";
+                $this->log(
+                    "uid:【" . $data['uid'] . "】登陆了，client_id:【" . $data['client_id'] . "】\n".
+                    "插入数据库【client_user】自增id：【" . $database->id() . "】"
+                );
                 //查找userinfo
                 $userInfo = $database->get('user',[
                     'nickname','id','avator'
                 ],[
                     'id'=>$data['uid']
                 ]);
-                var_dump($data['uid'],$userInfo);
                 $msg = [
                     'msg_type' => 'connect',
                     'userInfo' => $userInfo
@@ -124,4 +135,9 @@ class Swoole
         echo "client {$fd} closed\n";
         echo "删除client_id:{$fd}, 受影响行数：" . $database->rowCount() . "数据库【client_user】\n";
     }
+
+    public function exceptionHandler($error){
+        $this->log->writeLog($error);
+    }
 }
+

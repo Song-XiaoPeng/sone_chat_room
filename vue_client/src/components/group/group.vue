@@ -14,12 +14,12 @@ export default {
       type: '3',
       list: [{
         src: '/static/image/ironcat.jpg',
-        title: '标题一',
+        title: '群聊一',
         desc: '由各种物质组成的巨型球状天体，叫做星球。星球有一定的形状，有自己的运行轨道。',
         url: '/chatroom'
       }, {
         src: '/static/image/ironcat.jpg',
-        title: '标题二',
+        title: '群聊二',
         desc: '由各种物质组成的巨型球状天体，叫做星球。星球有一定的形状，有自己的运行轨道。',
         url: {
           path: '/chatroom',

@@ -15,6 +15,9 @@
         },
         "classmap": [
             "swoole_server/server/"
+        ],
+        "files": [
+            "swoole_server/config/constant.php", "swoole_server/config/helpres.php"
         ]
     }
 }

@@ -1,0 +1,8 @@
+﻿【2018-05-06 13:07:48】 Error: Class 'swoole_websocket_server' not found in G:\1.vue\sone_chat_room\swoole_server\server\Swoole.php:13
+Stack trace:
+#0 G:\1.vue\sone_chat_room\swoole_server\index.php(5): Swoole->__construct()
+#1 {main}
+【2018-05-06 13:07:52】 Error: Class 'swoole_websocket_server' not found in G:\1.vue\sone_chat_room\swoole_server\server\Swoole.php:13
+Stack trace:
+#0 G:\1.vue\sone_chat_room\swoole_server\index.php(5): Swoole->__construct()
+#1 {main}

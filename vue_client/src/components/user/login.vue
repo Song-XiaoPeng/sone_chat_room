@@ -74,7 +74,7 @@ export default {
                 this.notify({msg:"登陆成功!"})
                 setStorage(USER_INFO_KEY,res)
                 setStorage(TOKEN_KEY,res.access_token)
-                this.$router.push('/chatroom')
+                this.$router.push('/home')
             },
             error:(res) => {
                 this.ajaxLock = false
