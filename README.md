@@ -13,7 +13,8 @@
     - 个人中心
 4. 技术栈
     - Vue2.0 
-    - Swoole 
+    - PHP
+    - Swoole
     - WebSocket
     - Mysql 
     - Redis 
