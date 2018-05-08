@@ -1,5 +1,7 @@
 <?php
 
+use Medoo\Medoo;
+
 class Business {
     protected $db;
 

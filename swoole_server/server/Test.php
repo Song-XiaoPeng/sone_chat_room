@@ -1,19 +1,30 @@
 <?php
+
 use Medoo\Medoo;
 
 class Test
 {
-    public function __construct()
+    public $components = [];
+
+    public function __construct(array $modules)
     {
-        $database = new Medoo([
-            'database_type' => 'mysql',
-            'database_name' => 'timeline',
-            'server' => 'localhost',
-            'username' => 'root',
-            'password' => '',
-            'charset' => 'utf8'
-        ]);
-        echo '<pre>';
-        var_dump($database->select('user','*'));
+        $factory = new Factory();
+
+        foreach ($modules as $moduleName => $moduleOptions) {
+            $this->components[] = $factory->makeModule($moduleName,$moduleOptions); // new $moduleName();
+        }
+    }
+
+    public function __get($property)
+    {
+        if (!property_exists($this, $property)) {
+            return $this->components[$property] ? : '';
+        }
+
+    }
+
+    public function getDb()
+    {
+        return $this->components['db'];
     }
 }
