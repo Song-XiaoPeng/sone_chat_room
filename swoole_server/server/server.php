@@ -51,6 +51,28 @@ $server->on('message', function (swoole_websocket_server $server, $frame) use ($
     
     $data['client_id'] = $frame->fd;
     switch ($data['msg_type']) {
+        case "demo":
+            //找到uid对应的client_id
+            $msg_data = $data['msg'];
+            $msg_data = array_column($msg_data,null,'uid');
+            $uids = array_column($msg_data,'uid');
+            $res = $database->select('client_user',['client_id','uid'],['uid' => $uids]);
+            $client_ids = array_column($res,'client_id');
+            $res = array_column($res,null,'client_id');
+            foreach ($server->connections as $fd) {
+                if (in_array($fd, $client_ids)) {
+                    if($data['client_id'] == $fd){
+                        continue;
+                    }
+                    $msg = [
+                        'msg' => $msg_data[$res[$fd]['uid']]['msg'],
+                        'msg_type' => "message",
+                        'send_time' => date("Y-m-d H:i:s")
+                    ];
+                    $server->push($fd, json_encode($msg));
+                }
+            }
+            break;
         case "connect":
             if(empty($data['uid'])){
                 return;

@@ -1,5 +1,6 @@
 
 import { fetchUserInfo } from './tools.js'
+import Bus from './bus.js'
 
 export const socketHost = 'ws://ws.hellobirds.top:81'
 

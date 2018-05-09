@@ -44,7 +44,9 @@
 
 <script>
 import { Group,XInput,XButton,Alert,XImg } from 'vux'
-import { setStorage,USER_INFO_KEY,TOKEN_KEY } from '../../api/tools.js'
+import { setStorage,USER_INFO_KEY,TOKEN_KEY,fetchUserInfo } from '../../api/tools.js'
+import { openDB,createDB,insertData,getData } from '../../api/WebDB.js'
+import Bus from '@/api/bus.js'
 
 export default {
   data() {
@@ -53,7 +55,8 @@ export default {
           nickname: '',
           password: '',
           show2: false,
-          ajaxLock: false
+          ajaxLock: false,
+          db: ''
       }
   },
   methods:{
@@ -74,6 +77,8 @@ export default {
                 this.notify({msg:"登陆成功!"})
                 setStorage(USER_INFO_KEY,res)
                 setStorage(TOKEN_KEY,res.access_token)
+                insertData(this.db,'user_list',fetchUserInfo())
+                Bus.$emit("user_login",fetchUserInfo())
                 this.$router.push('/home')
             },
             error:(res) => {
@@ -84,12 +89,17 @@ export default {
       }
   },
   created() {
+    let _this = this
     document.onkeydown = (e) => {
         let key = window.event.keyCode;
         if(key==13) {
             this.login()
         }
     }
+    createDB("users",'user_list','uid')
+    Bus.$on('createDB',function(val){
+      _this.db = val
+    })
   },
   components: {
       Group,
