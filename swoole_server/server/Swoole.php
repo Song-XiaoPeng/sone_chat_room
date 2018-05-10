@@ -6,16 +6,20 @@ class Swoole
     protected $server;
     protected $business;
     protected $log;
+    protected $config;
 
     public function __construct($config)
     {
+        //加载配置
+        $this->config = $this->loadConfig();
+
         //加载日志处理对象
         $this->log = new MyLog();
 
         //注册自定义异常处理函数
         set_exception_handler([$this, 'exceptionHandler']);
         
-        $this->server = new swoole_websocket_server($config['ws']['host'], $config['ws']['port']);
+        $this->server = new swoole_websocket_server($this->config['ws']['host'], $this->config['ws']['port']);
 
         $this->business = new Business($config);
     }
@@ -23,7 +27,7 @@ class Swoole
     public function onOpen(swoole_websocket_server $server, $request)
     {
         $log = "client_id: {$request->fd} 连接成功";
-        $this->log->writeLog($log);
+        $this->Log($log);
 
         $msg = [
             'client_id' => $request->fd,
@@ -32,101 +36,16 @@ class Swoole
         $server->push($request->fd,json_encode($msg));
     }
 
-    public function onMessage()
+    public function onMessage(swoole_websocket_server $server, $frame)
     {
         $data = json_decode($frame->data, true);
 
         $data['client_id'] = $frame->fd;
-        switch ($data['msg_type']) {
-            case "connect":
-                if(empty($data['uid'])){
-                    return;
-                }
-                $database->insert('client_user', [
-                    'client_id' => $data['client_id'],
-                    'uid' => $data['uid']
-                ]);
-                $this->log(
-                    "uid:【" . $data['uid'] . "】登陆了，client_id:【" . $data['client_id'] . "】\n".
-                    "插入数据库【client_user】自增id：【" . $database->id() . "】"
-                );
-                //查找userinfo
-                $userInfo = $database->get('user',[
-                    'nickname','id','avator'
-                ],[
-                    'id'=>$data['uid']
-                ]);
-                $msg = [
-                    'msg_type' => 'connect',
-                    'userInfo' => $userInfo
-                ];
-                foreach ($server->connections as $fd) {
-                    $server->push($fd, json_encode($msg));
-                }
-                break;
-            case "message":
-                $sendTo = $data['sendTo'];
-                $database->insert('chat_message', [
-                    'uid' => $data['uid'],
-                    'sendTo' => $data['sendTo'],
-                    'msg' => $data['msg'],
-                    'createtime' => time(),
-                    'msg_type' => 1
-                ]);
-                echo "uid:【" . $data['uid'] . "】发送消息给，sendToUid:【" . $data['sendTo'] . "】\n";
-                echo "插入数据库【chat_message】自增id：【" . $database->id() . "】\n";
-                //获得接收者的client_id
-                $client_ids = $database->select('client_user', 'client_id', ['uid' => $sendTo]);
-                foreach ($server->connections as $fd) {
-                    if (in_array($fd, $client_ids)) {
-                        $msg = [
-                            'msg' => $data['msg'],
-                            'msg_type' => "message",
-                            'send_time' => date("Y-m-d H:i:s")
-                        ];
-                        $server->push($fd, $msg);
-                    }
-                }
-                break;
-            case "group_message":
-                $sendTo = 0;
-                $database->insert('chat_message', [
-                    'uid' => $data['uid'],
-                    'sendTo' => $sendTo,
-                    'msg' => $data['msg'],
-                    'createtime' => time(),
-                    'msg_type' => 2 //群聊
-                ]);
-                echo "uid:【" . $data['uid'] . "】发送群聊消息给，群组:【" . $sendTo . "】\n";
-                echo "插入数据库【chat_message】自增id：【" . $database->id() . "】\n";
-                //获得接收者的client_id
-                $client_ids = $database->select('client_user', 'client_id', ['uid' => $sendTo]);
-                //查找userinfo
-                $uid = $database->get('client_user','uid',[
-                    'client_id' => $frame->fd
-                ]);
-                var_dump($uid);
-                $userInfo = $database->get('user',[
-                    'nickname','id','avator'
-                ],[
-                    'id'=>$data['uid']
-                ]);
-                var_dump($userInfo);
-
-                foreach ($server->connections as $fd) {
-                    //排除自己
-                    if($fd == $frame->fd) continue;
-                    $msg = [
-                        'uid' => $data['uid'],
-                        'msg' => $data['msg'],
-                        'msg_type' => "message",
-                        'userInfo' => $userInfo,
-                        'send_time' => date("Y-m-d H:i:s")
-                    ];
-                    $server->push($fd, json_encode($msg));
-                }
-                break;
-        }
+        $msg = $this->business->onMessage($data);
+        
+        if($msg == false) {
+            return false;
+        }        
     }
 
     public function onClose($server, $fd)
@@ -136,8 +55,18 @@ class Swoole
         echo "删除client_id:{$fd}, 受影响行数：" . $database->rowCount() . "数据库【client_user】\n";
     }
 
+    protected function Log($log) 
+    {
+        $this->log->writeLog($log);
+    }
+
     public function exceptionHandler($error){
         $this->log->writeLog($error);
+    }
+
+    protected function loadConfig()
+    {
+        return require_once(CONFIG_PATH . '/config.php');
     }
 }
 

@@ -9,8 +9,13 @@ class MyException extends Exception {
         return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
     }
 
+    public function getLogHandler()
+    {
+        return new MyLog();
+    }
+
     public function exceptionHandler($error)
     {
-        (new MyLog()) -> writeLog($error);
+        $this->getLogHandler()->writeLog($error);
     }
 }
