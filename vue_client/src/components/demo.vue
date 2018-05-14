@@ -11,6 +11,7 @@
 
 <script>
 import { XHeader, Actionsheet, TransferDom, ButtonTab, ButtonTabItem } from 'vux'
+import ws from '@/api/websocket.js'
 
 export default {
   directives: {

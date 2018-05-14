@@ -11,7 +11,10 @@
     },
     "autoload": {
         "psr-4": {
-            "": "swoole_server/server/"
+            "": "swoole_server/server/",
+            "server\\tools": "swoole_server/server/tools/",
+            "server\\common": "swoole_server/server/common/",
+            "server\\factory": "swoole_server/server/factory/"
         },
         "classmap": [
             "swoole_server/server/"

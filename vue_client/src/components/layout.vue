@@ -22,7 +22,7 @@
 <script>
 import { createDB, getData } from '../api/WebDB';
 import Bus from '@/api/bus.js'
-import { socket } from '@/api/socket.js'
+import { socketHost } from '@/api/socket.js'
 
 export default {
   data() {
@@ -62,6 +62,32 @@ export default {
         let msg_type = msg.msg_type
         
         this.notify({msg:msg.msg})
+      },
+      reconnect(){
+        this.createWs()
+      },
+      onClose(msg){
+        setTimeout(() => {
+            this.reconnect();
+        },2000)// 延迟2s重连，避免过多的请求
+      },
+      onOpen(event) {
+        
+      },
+      createWs(){
+          try{
+            this.ws = new WebSocket(socketHost)
+            this.initWs()      
+          }catch(e){
+              console.log(e)
+              this.reconnect()
+          }
+      },
+      initWs() {
+          console.log(11111)
+        this.ws.onmessage = this.onMessage
+        this.ws.onclose = this.onClose
+        this.ws.onopen = this.onOpen
       }
   },
   created() {
@@ -79,9 +105,7 @@ export default {
         });
         _this.userList = val
       })
-
-      this.ws = socket
-      this.ws.onmessage = this.onMessage
+      this.createWs()
   },
   components: {
   }
