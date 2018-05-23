@@ -3,8 +3,8 @@ namespace factory\tools;
 
 class Factory {
     static public $instance;
-    public function M(){
-        if($instance !instanceof Factory){
+    public static function M(){
+        if(!(self::$instance instanceof self)){
             $instance = new Factory();
         }
         return $instance;

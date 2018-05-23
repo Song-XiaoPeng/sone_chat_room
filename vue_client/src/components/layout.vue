@@ -23,6 +23,7 @@
 import { createDB, getData } from '../api/WebDB';
 import Bus from '@/api/bus.js'
 import { socketHost } from '@/api/socket.js'
+import  localforage  from 'localforage'
 
 export default {
   data() {
@@ -91,11 +92,15 @@ export default {
       }
   },
   created() {
+      localforage.setItem('sone','111').then(function(){
+          console.log(123123)
+      })
+
       let _this = this
       createDB("users",'userList','uid')
 
       Bus.$on('createDB',(val)=>{
-          _this.db = val          
+          _this.db = val
           getData(this.db,'user_list')
       })
 

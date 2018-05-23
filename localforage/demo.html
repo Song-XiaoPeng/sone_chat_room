@@ -1,0 +1,19 @@
+<script src="localforage.min.js"></script>
+
+<script>
+    console.log('localforage is: ', localforage);
+
+
+    //这个是存储值 键为people2 值为：{..}
+    localforage.setItem('people2',{'name':'sss','age':'12','sex':'男'});
+
+    //这个方法是取出刚存储的值然后通过回掉进行处理，getItem方法的参数即为你想取出的setItem方法的参数
+    localforage.getItem('people').then(function(value) {
+        // 当离线仓库中的值被载入时，此处代码运行
+        console.log(value);
+    }).catch(function(err) {
+        // 当出错时，此处代码运行
+        console.log(err);
+    });
+
+</script>
