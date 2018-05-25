@@ -6,6 +6,7 @@ class Storage extends BaseStorage
 {
     const ONLINE_USER = "chat:online_user";
     const ONLINE_CLIENT = "chat:online_client";
+    const ONLINE_USER2CLIENT = "chat:online_user2client";
     const CLIENT = ":client";
 
     const GROUP_MEMBERS = ":group_members";
@@ -14,13 +15,13 @@ class Storage extends BaseStorage
     //建立连接
     public function onOpen($client_id)
     {
-        $this->redis->sadd(self::ONLINE_CLIENT, $client_id);
+        $this->redis->sadd(self::ONLINE_CLIENT . $client_id, $client_id);
     }
 
     //断开连接
     public function onClose($client_id)
     {
-        $this->redis->rem(self::ONLINE_CLIENT, $client_id);
+        $this->redis->rem(self::ONLINE_CLIENT . $client_id, $client_id);
     }
 
     //用户登陆
@@ -29,12 +30,14 @@ class Storage extends BaseStorage
         //记录登陆状态
         $this->redis->set(self::CLIENT . $client_id, $uid);
         $this->redis->sadd(self::ONLINE_USER, $uid);
+        $this->redis->sadd(self::ONLINE_USER2CLIENT . $uid, $client_id);
     }
 
     //用户登出
     public function logout($client_id)
     {
         $this->redis->del(self::CLIENT . $client_id);
+        $this->redis->srem(self::ONLINE_CLIENT . $client_id, $client_id);
     }
 
     /* 群聊 */
@@ -83,9 +86,9 @@ class Storage extends BaseStorage
     {
         $groups = $this->db->select('u_user_group_relationship', 'group_id', ['uid' => $uid]);
         $users = $this->db->select('u_user_friends_relationship', 'friend_uid', ['uid' => $uid]);
-        $groups = array_column($groups,'group_id');
-        $users = array_column($users,'friend_uid');
-        $res = array_merge($users,$groups);
+        $groups = array_column($groups, 'group_id');
+        $users = array_column($users, 'friend_uid');
+        $res = array_merge($users, $groups);
         return compact('res');
     }
 

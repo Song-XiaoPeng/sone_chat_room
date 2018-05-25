@@ -24,7 +24,7 @@ class Server extends BaseServer
             'uid' => $uid,
             'msg_type' => 'login'
         ];
-        $this->send2friendsAndGroupMembers($client_id,$uid, $send_msg);
+        $this->send2friendsAndGroupMembers($client_id, $uid, $send_msg);
     }
 
     //用户加入群聊
@@ -68,11 +68,11 @@ class Server extends BaseServer
     }
 
     //向好友和群聊成员发送消息
-    public function send2friendsAndGroupMembers($current_client_id,$uid, $msg)
+    public function send2friendsAndGroupMembers($current_client_id, $uid, $msg)
     {
         $onlineList = $this->storage->getFriendsAndGroupMembers($uid);
         foreach ($onlineList['groups'] as $v) {
-            $this->send2group($current_client_id,$v, $msg);
+            $this->send2group($current_client_id, $v, $msg);
         }
     }
 
@@ -89,6 +89,13 @@ class Server extends BaseServer
     public function sendJson($client_id, $msg)
     {
         $this->server->push($client_id, json_encode($msg, true));
+    }
+
+    //给用户发消息
+    public function send2User($current_client_id, $uid, $msg)
+    {
+        //找到用户对应的client_id
+
     }
 
     protected function initModule()
@@ -114,7 +121,7 @@ class Server extends BaseServer
 
     public function onClose($server, $fd)
     {
-        $this->storage->logout($fd);
+        $this->storage->onClose($fd);
         $this->log("client {$fd} closed\n");
     }
 
