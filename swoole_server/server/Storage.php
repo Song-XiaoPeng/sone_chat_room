@@ -144,6 +144,13 @@ class Storage extends BaseStorage
         $res = $this->db->get('user_friends_relationship', ['uid' => $uid]);
         //获得登陆状态
         $online_list = $this->getOnLineUserList();
+        array_walk($res,function(&$v) use($online_list){
+            if(in_array($v['uid'],$online_list)){
+                $v['user_status'] = 'online';
+            }else{
+                $v['user_status'] = 'offline';
+            }
+        });
         return $res;
     }
 }
