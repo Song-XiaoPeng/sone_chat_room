@@ -4,40 +4,51 @@ use server\common\BaseStorage;
 
 class Storage extends BaseStorage
 {
-    const ONLINE_USER = "chat:online_user";
-    const ONLINE_CLIENT = "chat:online_client";
-    const ONLINE_USER2CLIENT = "chat:online_user2client";
-    const CLIENT = ":client";
+    const ONLINE_USER = "chat:online_user"; //在线用户uid
+    const ONLINE_CLIENT = "chat:online_client"; //在线client
+    const ONLINE_USER2CLIENT = "chat:online_user2client";//用户和uid的关联
 
-    const GROUP_MEMBERS = ":group_members";
-    const GROUP_MSG = ":group_msg";
+    const GROUP_MEMBERS = ":group_members";//群聊成员 group_id=>uid
+    const GROUP_MSG = ":group_msg"; //群聊信息
 
     //建立连接
     public function onOpen($client_id)
     {
-        $this->redis->sadd(self::ONLINE_CLIENT . $client_id, $client_id);
+        $this->redis->sadd(self::ONLINE_CLIENT, $client_id);//集合：当前在线client_id
     }
 
     //断开连接
     public function onClose($client_id)
     {
-        $this->redis->rem(self::ONLINE_CLIENT . $client_id, $client_id);
+        $this->redis->srem(self::ONLINE_CLIENT, $client_id);
     }
 
     //用户登陆
     public function login($client_id, $uid)
     {
         //记录登陆状态
-        $this->redis->set(self::CLIENT . $client_id, $uid);
-        $this->redis->sadd(self::ONLINE_USER, $uid);
-        $this->redis->sadd(self::ONLINE_USER2CLIENT . $uid, $client_id);
+        $client_ids = $this->redis->hget(self::ONLINE_USER . $uid, 'client_id');
+        if (!$client_ids) {
+            $this->redis->hmset(self::ONLINE_USER . $uid, ['client_id' => $client_ids]);
+        }
+        $client_id_arr = explode('.', $client_ids);
+        $k = array_search($client_id, $client_id_arr);
+        if ($k === false) {
+            array_push($client_id_arr, $client_id);
+            $this->redis->hmset(self::ONLINE_USER . $uid, ['client_id' => implode('.', $client_id_arr)]);//hash：当前在线的用户uid
+        }
     }
 
     //用户登出
-    public function logout($client_id)
+    public function logout($client_id, $uid)
     {
-        $this->redis->del(self::CLIENT . $client_id);
-        $this->redis->srem(self::ONLINE_CLIENT . $client_id, $client_id);
+        $client_ids = $this->redis->hget(self::ONLINE_USER . $uid, 'client_id');
+        $client_id_arr = explode('.', $client_ids);
+        $k = array_search($client_id, $client_id_arr);
+        if ($k !== false) {//找到了
+            unset($client_id_arr[$k]);
+            $this->redis->hmset(self::ONLINE_USER . $uid, ['client_id' => implode('.', $client_id_arr)]);//hash：当前在线的用户uid
+        }
     }
 
     /* 群聊 */
@@ -66,8 +77,7 @@ class Storage extends BaseStorage
     //获得当前在线群聊的用户列表
     public function getOnlineGroupUserList($group_id)
     {
-//        $res = $this->db->get('u_user_group_relationship','uid', ['group_id' => $group_id]);
-//        $online_user = $this->getOnLineUserList();
+//      $res = $this->db->get('u_user_group_relationship','uid', ['group_id' => $group_id]);
         $group_members = $this->redis->zrange(self::GROUP_MEMBERS . $group_id, 0, -1, 'WITHSCORES');
         $online_user = $this->getOnLineUserList();
         foreach ($group_members as &$v) {
@@ -88,8 +98,11 @@ class Storage extends BaseStorage
         $users = $this->db->select('u_user_friends_relationship', 'friend_uid', ['uid' => $uid]);
         $groups = array_column($groups, 'group_id');
         $users = array_column($users, 'friend_uid');
-        $res = array_merge($users, $groups);
-        return compact('res');
+
+        foreach ($groups as $group_id) {
+            array_merge($users, $this->getOnlineGroupUserList($group_id));
+        }
+        return $users;
     }
 
     //保存群聊历史记录
@@ -158,17 +171,29 @@ class Storage extends BaseStorage
      * 通用方法
      *
      * @return mixed
+     * [1,2,3]
      */
     //获得在线人员列表
     public function getOnLineUserList()
     {
-        return $this->redis->smembers(self::ONLINE_USER);
+        $pattern = self::ONLINE_USER . '*';
+        $res = $this->redis->keys($pattern);
+        array_walk($res, function (&$v) {
+            $v = str_replace(self::ONLINE_USER, '', $v);
+        });
+        return $res;
+    }
+
+    public function getOnlineUid2Client($uid)
+    {
+        $res = $this->redis->hget(self::ONLINE_USER . $uid, 'client_id');
+        return implode('.', $res);
     }
 
     //批量获得用户列表
-    public function getUsers()
+    public function getFriendsList($uid)
     {
-
+        $this->db->select('u_user_friends_relationship');
     }
 
     //获得单个用户

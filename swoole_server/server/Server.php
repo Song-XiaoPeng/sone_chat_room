@@ -6,13 +6,28 @@ class Server extends BaseServer
 {
     protected $server;
     protected $storage;
+    const MSG_TYPE = [
+        1000 => 'login',
+        1001 => 'logout',
+        1002 => 'broadcast', //广播
+        1003 => 'init_chatroom', //初始化聊天室
+
+        1100 => 'join_group', //用户加入群聊
+        1101 => 'leave_group', //用户退出群聊
+        1102 => 'group_msg',//发送群聊消息
+        1103 => '',
+        1104 => '',
+
+        1200 => 'single_msg',//发送单聊消息
+    ];
 
     public function onMessage(swoole_websocket_server $server, $frame)
     {
         $data = json_decode($frame->data, true);
         $msg_type = $data['msg_type'];
+        $method = 'c_' . $msg_type;
         $client_id = $frame->fd;
-        $this->$msg_type($client_id, $data);
+        $this->$method($client_id, $data);
     }
 
     //用户登陆
@@ -20,11 +35,15 @@ class Server extends BaseServer
     {
         $uid = $msg['uid'];
         $this->storage->login($client_id, $uid);
-        $send_msg = [
-            'uid' => $uid,
-            'msg_type' => 'login'
-        ];
-        $this->send2friendsAndGroupMembers($client_id, $uid, $send_msg);
+        $this->loginNotify($client_id, $uid);
+    }
+
+    //用户退出
+    public function c_logout($client_id, $msg)
+    {
+        $uid = $msg['uid'];
+        $this->storage->login($client_id, $uid);
+        $this->logoutNotify($client_id, $uid);
     }
 
     //用户加入群聊
@@ -48,19 +67,47 @@ class Server extends BaseServer
     //用户发送单聊消息
     public function c_single_msg($client_id, $msg)
     {
-
+        $send_uid = $msg['send_uid'];
+        $recv_uid = $msg['recv_uid'];
+        $session_id = $msg['session_id'] ?: $this->storage->getSingleChatSession($send_uid, $recv_uid);
+        $send_msg = $msg['msg'];
+        $this->storage->saveSingleChatMsg($session_id, $send_msg);
+        $this->send2User($client_id, $recv_uid, $send_msg);
+        $this->send2User($client_id, $send_uid, $send_msg);
     }
 
-    //发送消息
-    public function send($client_id, $msg)
+    //初始化聊天室 获得用户列表 用户信息 聊天历史记录等
+    public function c_init_chatroom($client_id, $msg)
     {
-        $this->server->push($client_id, $msg);
+        $msg_types = $msg['msg_types'];
+        foreach ($msg_types as $msg_type) {
+            $method = 'i_' . $msg_type;
+            $this->$method($client_id, $msg);
+        }
+    }
+
+    //初始化聊天室：获得好友列表
+    public function i_friends_list($client_id,$msg)
+    {
+        $uid = $msg['uid'];
+
     }
 
     //向群聊成员发送消息
     public function send2group($current_client_id, $group_id, $msg)
     {
         $onlineList = $this->storage->getOnlineGroupUserList($group_id);
+        foreach ($onlineList as $v) {
+            if ($current_client_id == $v) continue;
+            $this->send2User($current_client_id, $v, $msg);
+        }
+    }
+
+    //给用户发消息
+    public function send2User($current_client_id, $uid, $msg)
+    {
+        //找到用户对应的client_id
+        $onlineList = $this->storage->getOnlineUid2Client($uid); //[1,2,3]
         foreach ($onlineList as $v) {
             if ($current_client_id == $v) continue;
             $this->sendJson($v, $msg);
@@ -70,10 +117,30 @@ class Server extends BaseServer
     //向好友和群聊成员发送消息
     public function send2friendsAndGroupMembers($current_client_id, $uid, $msg)
     {
-        $onlineList = $this->storage->getFriendsAndGroupMembers($uid);
-        foreach ($onlineList['groups'] as $v) {
-            $this->send2group($current_client_id, $v, $msg);
+        $users = $this->storage->getFriendsAndGroupMembers($uid);
+        foreach ($users as $uid) {
+            $this->send2User($current_client_id, $uid, $msg);
         }
+    }
+
+    //登陆通知
+    public function loginNotify($current_client_id, $uid)
+    {
+        $msg = [
+            'msg_type' => 'login',
+            'uid' => $uid
+        ];
+        $this->send2friendsAndGroupMembers($current_client_id, $uid, $msg);
+    }
+
+    //退出通知
+    public function logoutNotify($current_client_id, $uid)
+    {
+        $msg = [
+            'msg_type' => 'logout',
+            'uid' => $uid
+        ];
+        $this->send2friendsAndGroupMembers($current_client_id, $uid, $msg);
     }
 
     //向所有在线人员广播消息
@@ -86,16 +153,15 @@ class Server extends BaseServer
         }
     }
 
+    //发送消息
+    public function send($client_id, $msg)
+    {
+        $this->server->push($client_id, $msg);
+    }
+
     public function sendJson($client_id, $msg)
     {
         $this->server->push($client_id, json_encode($msg, true));
-    }
-
-    //给用户发消息
-    public function send2User($current_client_id, $uid, $msg)
-    {
-        //找到用户对应的client_id
-
     }
 
     protected function initModule()
