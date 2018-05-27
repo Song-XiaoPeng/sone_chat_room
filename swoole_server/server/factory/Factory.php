@@ -1,5 +1,5 @@
 <?php
-namespace factory\tools;
+namespace server\factory;
 
 class Factory {
     static public $instance;

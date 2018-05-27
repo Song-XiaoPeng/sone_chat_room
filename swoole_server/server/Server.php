@@ -90,6 +90,7 @@ class Server extends BaseServer
     public function i_friends_list($client_id,$msg)
     {
         $uid = $msg['uid'];
+        $uids = $this->storage->getFriendsList($uid);
 
     }
 
@@ -168,12 +169,16 @@ class Server extends BaseServer
     {
         parent::initModule();
         $this->server = new swoole_websocket_server($this->config['ws']['host'], $this->config['ws']['port']);
-        $this->storage = new Storage();
-        $this->server->set([]);
+        $this->server->set([
+//            'worker_num' => 4,
+            'daemonize' => true,
+        ]);
         $this->server->on('finish', [$this, 'onFinish']);
         $this->server->on('open', [$this, 'onOpen']);
         $this->server->on('message', [$this, 'onMessage']);
         $this->server->on('close', [$this, 'onClose']);
+        $this->server->start();
+        $this->storage = new Storage();
     }
 
     public function onOpen(swoole_websocket_server $server, $request)

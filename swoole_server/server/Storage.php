@@ -193,7 +193,9 @@ class Storage extends BaseStorage
     //批量获得用户列表
     public function getFriendsList($uid)
     {
-        $this->db->select('u_user_friends_relationship');
+        return $this->db->select('u_user_friends_relationship','friend_uid',[
+            'uid' => $uid
+        ]);
     }
 
     //获得单个用户
