@@ -1,5 +1,6 @@
 <?php
 
+use App\User;
 use Illuminate\Http\Request;
 
 /*
@@ -22,7 +23,18 @@ Route::get('test', function () {
 });
 
 Route::prefix('v1.0')->middleware(['captcha.check', 'auth:api'])->group(function () {
+    //用户
     Route::get('getUserInfo', 'User\UserController@getUserInfo');
+
+    //群聊
+    //获得群聊分组
+    Route::get('getGroupList', function () {
+        return User::with(['joinedGroups' => function ($query) {
+            $query->with('tags')->where('is_del', 0);
+        }]);
+    });
+
+    //单聊
 
 });
 
