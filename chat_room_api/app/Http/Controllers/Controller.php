@@ -165,9 +165,9 @@ class Controller extends BaseController
      */
     static function ossUpload($object, $content, $type = "")
     {
-        $accessKeyId = "LTAI752rbfc4enCB";
-        $accessKeySecret = "4H0xk2HVcoHvOBPUzJ4XntfISL8W8t";
-        $endpoint = "http://oss-cn-shenzhen.aliyuncs.com";
+        $accessKeyId = "";
+        $accessKeySecret = "";
+        $endpoint = "";
         $bucket = env("OSS_BUCKET_NAME");
         $content = $content;
         if ($type) {
